@@ -50,7 +50,8 @@ DRAFT.frameSize = 300
 	public Map<DTNHost, Double> neighbourSet;
 	public Set<DTNHost> markedForDeletion;
 	public Map<DTNHost, DefaultMutableTreeNode> localClusterCache;
-        public Map<DTNHost, DefaultMutableTreeNode> FCluster;
+	public Map<DTNHost, Double> meetSet;//存储与目的节点相遇次数
+
 	
 	protected double familiarThreshold;
 	protected double degrade;
@@ -62,7 +63,7 @@ DRAFT.frameSize = 300
 		this.familiarThreshold = simpleSettings.getDouble(FAMILIAR_SETTING);
 		this.degrade = simpleSettings.getDouble(DEGRADE);
 		this.frameSize = simpleSettings.getInt(FRAME_SIZE);
-                                        System.out.println("******"+1+"********");
+
 	}
 	
 	public DRAFT(DRAFT proto) {
@@ -74,8 +75,8 @@ DRAFT.frameSize = 300
 		neighbourSet = new HashMap<DTNHost, Double>();
 		markedForDeletion = new HashSet<DTNHost>();
 		localClusterCache = new HashMap<DTNHost, DefaultMutableTreeNode>();
-                FCluster = new HashMap<DTNHost, DefaultMutableTreeNode>();
-		 System.out.println("******"+2+"********");
+		meetSet = new HashMap<DTNHost, Double>();
+
 	}
 	
 	@Override
@@ -202,7 +203,15 @@ DRAFT.frameSize = 300
 				if (othRouter.hasMessage(m.getId())) {//对方已经收到过了则忽略
 					continue; // skip messages that the other one has
 				}
-				//如果目的节点与对方是同簇才会进入消息队列
+				
+				//我的想法：如果接触节点与目的节点相遇次数多（相当于亲密度--该算法中利用相遇次数来当作累计相遇时间，不太合理，加入我以前做的获取时间的工作可能会好一点），则也进入消息队列（未完成）
+				/*前提：接触节点与目的节点相遇过
+				 * 优先级：接触节点与目的节点同簇>接触节点在LocalCluster中>接触节点在NeighborSet中
+				 *做法：新建一个cluster，用来记接触节点与目的节点相遇的次数（Map<DTNHost, Double> meetSet;）
+				 * */
+				//我的想法（失败，不可行，本方法就是LocalCluster中进行的）：如果接触节点neighborSet或者LocalCluster中包含有与目的节点相遇过的（相当于共同好友个数），将该节点加入消息队列
+				
+				//如果目的节点与对方是同簇才会进入消息队列（等级最高，最优先加入消息队列）
 				if(othRouter.commumesWithHost(m.getTo())) // peer is in local commun. of dest
 					messages.add(new Tuple<Message, Connection>(m,con));
 			}			
