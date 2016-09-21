@@ -203,9 +203,11 @@ public class DRAFT extends ActiveRouter {
 				 */
 				// 我的想法（失败，不可行，本方法就是LocalCluster中进行的）：如果接触节点neighborSet或者LocalCluster中包含有与目的节点相遇过的（相当于共同好友个数），将该节点加入消息队列
 
-				if(othRouter.getRange()<3){
-					System .out .println("等级成功");
+				if(othRouter.meetSet!=null){
+					//if(othRouter.meetSet.get(m.getTo())>0){
+					System .out .println("等级成功"+othRouter.meetSet.get(m.getTo()));
 					messages.add(new Tuple<Message, Connection>(m, con));
+				//	}
 				}
 				// 如果目的节点与对方是同簇才会进入消息队列（等级最高，最优先加入消息队列）
 				if (othRouter.commumesWithHost(m.getTo())) // peer is in local
@@ -320,21 +322,21 @@ public class DRAFT extends ActiveRouter {
 		}
 	}
 
-	public int getRange() {
-		
-		System.out.println("*************8");
-		if(this.meetSet.get(getHost()) == null){
-			return 4;
-		}
-		if(this.meetSet.get(getHost()) >=3){
-			return 1;
-		}
-		else if(this.meetSet.get(getHost()) >=2){
-			return 2;
-		}else {
-			return 3;
-		}
-
-	}
+//	public int getRange() {
+//		
+//		System.out.println("*************8");
+//		if(this.meetSet.get(getHost()) == null){
+//			return 4;
+//		}
+//		if(this.meetSet.get(getHost()) >=3){
+//			return 1;
+//		}
+//		else if(this.meetSet.get(getHost()) >=2){
+//			return 2;
+//		}else {
+//			return 3;
+//		}
+//
+//	}
 
 }
