@@ -205,7 +205,6 @@ public class DRAFT extends ActiveRouter {
 
 				// 如果目的节点与对方是同簇才会进入消息队列（等级最高，最优先加入消息队列）
 				if (othRouter.commumesWithHost(m.getTo())) // peer is in local
-															// commun. of dest
 					messages.add(new Tuple<Message, Connection>(m, con));
 			}
 		}
@@ -248,7 +247,6 @@ public class DRAFT extends ActiveRouter {
 			 */
 			// if(c.getConnectiontime()>=100){
 			if (this.neighbourSet.containsKey(peer)) {// 如果neighbourSet包含当前连接的节点peer，则
-
 				this.neighbourSet.put(peer, this.neighbourSet.get(peer) + 1);// 将peer次数加一；
 			} else {
 				this.neighbourSet.put(peer, 1.0);// 不包含则将peer次数设为1；
@@ -256,6 +254,7 @@ public class DRAFT extends ActiveRouter {
 
 			for (Message m : msgCollection) {
 				if (peer == m.getTo()) {// 接触节点是目的节点，则将meet次数加一
+					this.localClusterCache.put(peer, peerC.getLocalCluster(this.getHost()));
 					if (this.meetSet.containsKey(peer))
 						this.meetSet.put(peer, this.meetSet.get(peer) + 1);
 					else
@@ -314,9 +313,16 @@ public class DRAFT extends ActiveRouter {
 		}
 	}
 
-	public int getRange(DTNHost node) {
+	public int getRange() {
+		if(this.meetSet.get(getHost()) >=3){
+			return 1;
+		}
+		else if(this.meetSet.get(getHost()) >=2){
+			return 2;
+		}else {
+			return 3;
+		}
 
-		return 0;
 	}
 
 }
