@@ -203,16 +203,26 @@ public class DRAFT extends ActiveRouter {
 				 */
 				// 我的想法（失败，不可行，本方法就是LocalCluster中进行的）：如果接触节点neighborSet或者LocalCluster中包含有与目的节点相遇过的（相当于共同好友个数），将该节点加入消息队列
 
-				if(othRouter.meetSet!=null){
-					//if(othRouter.meetSet.get(m.getTo())>0){
-					System .out .println("等级成功"+othRouter.meetSet.get(m.getTo()));
-					messages.add(new Tuple<Message, Connection>(m, con));
-				//	}
-				}
 				// 如果目的节点与对方是同簇才会进入消息队列（等级最高，最优先加入消息队列）
-				if (othRouter.commumesWithHost(m.getTo())) // peer is in local
+				if (othRouter.commumesWithHost(m.getTo())) {// peer is in local
 					messages.add(new Tuple<Message, Connection>(m, con));
-				
+					continue;
+				}
+
+				if (othRouter.meetSet.get(m.getTo()) != null) {
+					if (othRouter.meetSet.get(m.getTo()) > 10)// 如果接触节点与目的节点相遇次数大于10，进入消息队列；（等级第二）
+					{
+						System.out.println("等级二：" + othRouter.meetSet.get(m.getTo()));
+						messages.add(new Tuple<Message, Connection>(m, con));
+						//continue;
+					} else if (othRouter.meetSet.get(m.getTo()) > 0) // 如果接触节点与目的节点相遇次数小于10，大于0，则等待下一个，直到遇见等级比他低的（与目的节点相遇次数为0或者小于该节点的次数）为止（等级第三）
+					{
+						//做法猜想：建立一个栈，将该节点加入栈中，每次来了新节点就进行比较，
+						//如果新节点级数较低，则该节点出栈，加入消息队列，新节点入栈；
+						//否则，若相等，则新节点和老节点加入消息队列；不相等，
+						System.out.println("等级三：" + othRouter.meetSet.get(m.getTo()));
+					}
+				}
 
 			}
 		}
@@ -271,14 +281,14 @@ public class DRAFT extends ActiveRouter {
 				}
 			}
 
-			// 在这统计与目的节点统计次数
+			// 在这统计与目的节点相遇次数
 
 			if (this.neighbourSet.get(peer) >= this.familiarThreshold) {// 如果次数大于阈值，则
 				checkLocalCommunity(c);// 达到要求则加入到本地通信组localClusterCache
 			}
 
 		}
-		
+
 		double simTime = SimClock.getTime(); // (seconds since start)
 
 		double timeInFrame = simTime % this.frameSize;
@@ -312,7 +322,7 @@ public class DRAFT extends ActiveRouter {
 	/**
 	 * empties marked for deletion
 	 */
-	// 把delete队列中的节点从簇中移除,delete队列什么时候清空呢？？
+	// 把delete队列中的节点从簇中移除,delete队列什么时候清空呢？？--每个time frame开始时
 	public void emptyMarkedForDeletion() {
 		// Any nodes that are still in the mark for deletion pile, delete
 		for (DTNHost host : this.markedForDeletion) {
@@ -322,21 +332,21 @@ public class DRAFT extends ActiveRouter {
 		}
 	}
 
-//	public int getRange() {
-//		
-//		System.out.println("*************8");
-//		if(this.meetSet.get(getHost()) == null){
-//			return 4;
-//		}
-//		if(this.meetSet.get(getHost()) >=3){
-//			return 1;
-//		}
-//		else if(this.meetSet.get(getHost()) >=2){
-//			return 2;
-//		}else {
-//			return 3;
-//		}
-//
-//	}
+	// public int getRange() {
+	//
+	// System.out.println("*************8");
+	// if(this.meetSet.get(getHost()) == null){
+	// return 4;
+	// }
+	// if(this.meetSet.get(getHost()) >=3){
+	// return 1;
+	// }
+	// else if(this.meetSet.get(getHost()) >=2){
+	// return 2;
+	// }else {
+	// return 3;
+	// }
+	//
+	// }
 
 }
