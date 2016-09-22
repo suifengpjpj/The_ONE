@@ -189,8 +189,8 @@ public class DRAFT extends ActiveRouter {
 			}
 
 			// 一个节点携带的message很多，每个message的目的节点不一样
-			Double a=0.0;
-			ArrayList<Tuple<Message, Connection>> waitCon=new ArrayList<Tuple<Message, Connection>>();
+			Double a = 0.0;
+			ArrayList<Tuple<Message, Connection>> waitCon = new ArrayList<Tuple<Message, Connection>>();
 			for (Message m : msgCollection) {
 				if (othRouter.hasMessage(m.getId())) {// 对方已经收到过了则忽略
 					continue; // skip messages that the other one has
@@ -216,22 +216,19 @@ public class DRAFT extends ActiveRouter {
 					{
 						System.out.println("等级二：" + othRouter.meetSet.get(m.getTo()));
 						messages.add(new Tuple<Message, Connection>(m, con));
-						//continue;
+						// continue;
 					} else if (othRouter.meetSet.get(m.getTo()) > 0) // 如果接触节点与目的节点相遇次数小于10，大于0，则等待下一个，直到遇见等级比他低的（与目的节点相遇次数为0或者小于该节点的次数）为止（等级第三）
-					{
-						//做法猜想：建立一个栈，将该节点加入栈中，每次来了新节点就进行比较，
-						//如果新节点级数较低，则该节点出栈，加入消息队列，新节点入栈；
-						//否则，若相等，则新节点和老节点加入消息队列；不相等，
-						if(a==0.0)
-							messages.add(new Tuple<Message, Connection>(m, con));
-						else if(a<=othRouter.meetSet.get(m.getTo()) ){
-							messages.add(new Tuple<Message, Connection>(m, con));							
-						}
-						else {
-							a=othRouter.meetSet.get(m.getTo());
-						}
-							
-						System.out.println("等级三：" + othRouter.meetSet.get(m.getTo()));
+					{/*
+						 * // 做法猜想：建立一个栈，将该节点加入栈中，每次来了新节点就进行比较， //
+						 * 如果新节点级数较低，则该节点出栈，加入消息队列，新节点入栈； //
+						 * 否则，若相等，则新节点和老节点加入消息队列；不相等， if (a == 0.0)
+						 * messages.add(new Tuple<Message, Connection>(m, con));
+						 * else if (a <= othRouter.meetSet.get(m.getTo())) {
+						 * messages.add(new Tuple<Message, Connection>(m, con));
+						 * } else { waitCon.wait(); a =
+						 * othRouter.meetSet.get(m.getTo()); }
+						 */
+
 					}
 				}
 
