@@ -8,6 +8,8 @@ package routing;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +32,7 @@ import core.Tuple;
 public class DRAFT extends ActiveRouter {
 
 	public static final String DRAFT_NS = "DRAFT";
-
+	public static int ran2 = 0, ran3 = 0;
 	/**
 	 * Total contact time threshold for adding a node to the familiar set
 	 * -setting id {@value}
@@ -135,7 +137,8 @@ public class DRAFT extends ActiveRouter {
 
 		// 2) check that the connection has met the time threshold. If so:
 		if (this.neighbourSet.get(peer) >= this.familiarThreshold) {// 判断是否大于阈值，如果是则
-			//System.out.println("Peer " + peer + " passed familiar threshold.");
+			// System.out.println("Peer " + peer + " passed familiar
+			// threshold.");
 			// 3) if device is in Do then remove it如果peer存在于Do中，则把它移除；
 			if (this.markedForDeletion.contains(peer))
 				this.markedForDeletion.remove(peer);
@@ -177,7 +180,7 @@ public class DRAFT extends ActiveRouter {
 	private Tuple<Message, Connection> tryOtherMessages() {
 
 		List<Tuple<Message, Connection>> messages = new ArrayList<Tuple<Message, Connection>>();
-		ArrayList<Tuple<Message, Connection>> waitConList = new ArrayList<Tuple<Message, Connection>>();//等待队列
+		ArrayList<Tuple<Message, Connection>> waitConList = new ArrayList<Tuple<Message, Connection>>();// 等待队列
 		Collection<Message> msgCollection = getMessageCollection();
 
 		for (Connection con : getConnections()) {// 对所有连接，也即是对接触节点发送消息
@@ -190,7 +193,7 @@ public class DRAFT extends ActiveRouter {
 
 			// 一个节点携带的message很多，每个message的目的节点不一样
 			Double a = 0.0;
-			
+
 			for (Message m : msgCollection) {
 				if (othRouter.hasMessage(m.getId())) {// 对方已经收到过了则忽略
 					continue; // skip messages that the other one has
@@ -206,42 +209,43 @@ public class DRAFT extends ActiveRouter {
 				// 我的想法（失败，不可行，本方法就是LocalCluster中进行的）：如果接触节点neighborSet或者LocalCluster中包含有与目的节点相遇过的（相当于共同好友个数），将该节点加入消息队列
 
 				// 如果目的节点与对方是同簇才会进入消息队列（等级最高，最优先加入消息队列）
-				if (othRouter.commumesWithHost(m.getTo())) {// peer is in local
-					messages.add(new Tuple<Message, Connection>(m, con));
-					System.out.println("等级一：" + othRouter.meetSet.get(m.getTo()));
-					continue;
-				}
 
-				if (othRouter.meetSet.get(m.getTo()) != null) {
-					if (othRouter.meetSet.get(m.getTo()) > 10)// 如果接触节点与目的节点相遇次数大于10，进入消息队列；（等级第二）
+				if (othRouter.meetSet.get(m.getTo()) != null&&othRouter.commumesWithHost(m.getTo())) {
+					if (othRouter.meetSet.get(m.getTo()) >= 100)// 如果接触节点与目的节点相遇次数大于10，进入消息队列；（等级第二）
 					{
-						System.out.println("等级二：" + othRouter.meetSet.get(m.getTo()));
+						ran2++;
+						System.out.println("等级二：" + othRouter.meetSet.get(m.getTo()) + "+" + ran2);
 						messages.add(new Tuple<Message, Connection>(m, con));
 						// continue;
-					} else if (othRouter.meetSet.get(m.getTo()) > 0) // 如果接触节点与目的节点相遇次数小于10，大于0，则等待下一个，直到遇见等级比他低的（与目的节点相遇次数为0或者小于该节点的次数）为止（等级第三）
+					} else if (othRouter.meetSet.get(m.getTo()) > 20) // 如果接触节点与目的节点相遇次数小于10，大于0，则等待下一个，直到遇见等级比他低的（与目的节点相遇次数为0或者小于该节点的次数）为止（等级第三）
 					{
-						System.out.println("等级三：" + othRouter.meetSet.get(m.getTo()));
-						  // 做法猜想：建立一个栈，将该节点加入栈中，每次来了新节点就进行比较， //
-						 //如果新节点级数较低，则该节点出栈，加入消息队列，新节点入栈； //
-						 //否则，若相等，则新节点和老节点加入消息队列；如果新节点级数较高，则直接加入消息队列，栈不变。
+						ran3++;
+						System.out.println("等级三：" + othRouter.meetSet.get(m.getTo()) + "+" + ran3);
+						// 做法猜想：建立一个栈，将该节点加入栈中，每次来了新节点就进行比较， //
+						// 如果新节点级数较低，则该节点出栈，加入消息队列，新节点入栈； //
+						// 否则，若相等，则新节点和老节点加入消息队列；如果新节点级数较高，则直接加入消息队列，栈不变。
 
-						if (waitConList.isEmpty()) {//如果栈为空，则将该节点入栈，等待下一节点进行比较。
+						if (waitConList.isEmpty()) {// 如果栈为空，则将该节点入栈，等待下一节点进行比较。
 							a = othRouter.meetSet.get(m.getTo());
 							waitConList.add(new Tuple<Message, Connection>(m, con));
-							// messages.add(new Tuple<Message, Connection>(m,con));
-							
+							// messages.add(new Tuple<Message,
+							// Connection>(m,con));
+							continue;
 						} else {
-							if (othRouter.meetSet.get(m.getTo())<a) {//如果新节点级数较低，则该节点出栈，加入消息队列，新节点入栈；
+							if (othRouter.meetSet.get(m.getTo()) < a) {// 如果新节点级数较低，则该节点出栈，加入消息队列，新节点入栈；
 								messages.add(waitConList.get(0));
 								waitConList.remove(0);
 								waitConList.add(new Tuple<Message, Connection>(m, con));
-								a=othRouter.meetSet.get(m.getTo());
-							} else if (othRouter.meetSet.get(m.getTo())==a) {//若相等，则新节点和老节点加入消息队列,清空栈；
+								a = othRouter.meetSet.get(m.getTo());
+								continue;
+							} else if (othRouter.meetSet.get(m.getTo()) == a) {// 若相等，则新节点和老节点加入消息队列,清空栈；
 								messages.add(waitConList.get(0));
-								messages.add(new Tuple<Message, Connection>(m,con));
+								messages.add(new Tuple<Message, Connection>(m, con));
 								waitConList.remove(0);
-							}else {//如果新节点级数较高，则直接加入消息队列，栈不变。
-								messages.add(new Tuple<Message, Connection>(m,con));
+								continue;
+							} else {// 如果新节点级数较高，则直接加入消息队列，栈不变。
+								messages.add(new Tuple<Message, Connection>(m, con));
+								continue;
 							}
 						}
 					}
@@ -256,7 +260,23 @@ public class DRAFT extends ActiveRouter {
 		if (messages.size() == 0) {
 			return null;
 		}
+		Collections.sort(messages,new Comparator<Tuple<Message, Connection>>(){
 
+			@Override
+			public int compare(Tuple<Message, Connection> m,
+					Tuple<Message, Connection> n) {
+				
+				DRAFT mRouter=(DRAFT)m.getValue().getOtherNode(getHost()).getRouter();			
+				DRAFT nRouter=(DRAFT)n.getValue().getOtherNode(getHost()).getRouter();
+				if(mRouter.meetSet.get(m.getKey())!=null&&nRouter.meetSet.get(m.getKey())!=null){
+					Double mm=mRouter.meetSet.get(m.getKey());
+					Double nn=mRouter.meetSet.get(n.getKey());
+					return mm.compareTo(nn);
+				}else
+					return 0;
+			}
+			
+		});
 		// sort the message-connection tuples 发送消息，了解消息发送机制可继续跟踪
 		return tryMessagesForConnected(messages); // try to send messages
 	}
@@ -301,11 +321,10 @@ public class DRAFT extends ActiveRouter {
 				if (peer == m.getTo()) {// 接触节点是目的节点，则将meet次数加一
 					System.out.println("###########3");
 					this.localClusterCache.put(peer, peerC.getLocalCluster(this.getHost()));
-					if (this.meetSet.containsKey(peer)){
+					if (this.meetSet.containsKey(peer)) {
 						this.meetSet.put(peer, this.meetSet.get(peer) + 1);
-					System.out.println("###########2");
-					}
-					else{
+						System.out.println("###########2");
+					} else {
 						this.meetSet.put(peer, 1.0);
 						System.out.println("###########1");
 					}
